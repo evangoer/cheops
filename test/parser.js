@@ -2,6 +2,11 @@ var vows = require("vows"),
     assert = require("assert"),
     parser = require("../lib/parser.js");
     
+var ts_inline = [{id:"(string)", value:"This is "}, {id:"**"}, 
+        {id:"(string)", value:"bold"}, {id:"**"}, {id:"(string)", value:" text."}];
+
+var ts_paragraph = [{id:"paragraph"}].concat(ts_inline).concat([{id:"\n\n"}]);
+    
 vows.describe("Parser Tests").addBatch({
     "A symbol table": {
         topic: parser,
@@ -10,7 +15,7 @@ vows.describe("Parser Tests").addBatch({
             assert.isFunction(parser.symbol);
             assert.isFunction(parser.get_token);
         },
-        "can define a fake symbol": function(parser) {
+        "can define a bogus symbol": function(parser) {
             var s_bogus = parser.symbol("(bogus)");
             assert.equal(s_bogus.id, "(bogus)");
         },
@@ -28,12 +33,12 @@ vows.describe("Parser Tests").addBatch({
             assert.equal(t_string.value, "HELLOSKI");
         }
     },
-    "A token stream" : {
+    "A token stream": {
         topic: parser,
         
         "can set a stream of tokens": function(parser) {
             assert.isFunction(parser.set_token_stream);
-            parser.set_token_stream([{id:"(string)", value:"This is "}, {id:"**"}, {id:"(string)", value:"bold"}, {id:"**"}, {id:"(string)", value:" text"}]);
+            parser.set_token_stream(ts_inline);
         },
         "where the first token is a string": function(parser) {
             var tok = parser.advance();
@@ -50,5 +55,34 @@ vows.describe("Parser Tests").addBatch({
             var tok = parser.advance();
             assert.equal(tok.id, "(end)");
         }
+    }
+}).addBatch({
+    "A paragraph document tree": {
+        topic: function() {
+            parser.set_token_stream(ts_paragraph);
+            parser.advance();
+            return parser.parse();
+        },
+        "starts with a paragraph": function(tree) {
+            assert.equal(tree.id, "paragraph");
+            assert.equal(tree.value, "paragraph");
+        },
+        "which has three children": function(tree) {
+            assert.length(tree.first, 3);
+        },
+        "where the first child is text": function(tree) {
+            assert.equal(tree.first[0].id, "(string)");
+            assert.equal(tree.first[0].value, "This is ");
+        },
+        "where the second child is bold": function(tree) {
+            assert.equal(tree.first[1].id, "**");
+            assert.equal(tree.first[1].value, "**");
+            assert.equal(tree.first[1].first.id, "(string)");
+            assert.equal(tree.first[1].first.value, "bold");
+        },
+        "where the third child is text": function(tree) {
+            assert.equal(tree.first[2].id, "(string)");
+            assert.equal(tree.first[2].value, " text.");
+        },
     }
 }).export(module);
