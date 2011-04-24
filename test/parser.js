@@ -3,35 +3,35 @@ var vows = require("vows"),
     parser = require("../lib/parser.js");
     
 vows.describe("Parser Tests").addBatch({
-    "A parser has a symbol table": {
+    "A symbol table": {
         topic: parser.symbols,
         
-        "that responds to define() and getToken()": function(symbols) {
+        "responds to define() and getToken()": function(symbols) {
             assert.isFunction(symbols.define);
             assert.isFunction(symbols.get_token);
         },
-        "that can define a fake symbol": function(symbols) {
+        "can define a fake symbol": function(symbols) {
             symbols.define({id:"(bogus)"});
             assert.equal(symbols.table["**"].id, "**");
         },
-        "that can get a bogus symbol after it is defined": function(symbols) {
+        "can get a bogus symbol once it is defined": function(symbols) {
             var t_bogus = symbols.get_token({id: "(bogus)"});
             assert.equal(symbols.table["(string)"].id, "(string)");
         },
-        "that can get a bold token": function(symbols) {
+        "can get a bold token": function(symbols) {
             var t_bold = symbols.get_token({id: "**"});
             assert.equal(t_bold.id, "**");
         },
-        "that can get a string token": function(symbols) {
+        "can create a string token": function(symbols) {
             var t_string = symbols.get_token({id: "(string)", value: "HELLOSKI"});
             assert.equal(t_string.id, "(string)");
             assert.equal(t_string.value, "HELLOSKI");
         }
     },
-    "A parser has a token stream" : {
+    "A token stream" : {
         topic: parser.token_stream,
         
-        "that can set a stream of tokens": function(stream) {
+        "can set a stream of tokens": function(stream) {
             assert.isFunction(stream.set);
             stream.set([{id:"(string)", value:"This is "}, {id:"**"}, {id:"(string)", value:"bold"}, {id:"**"}, {id:"(string)", value:" text"}]);
         },
@@ -50,6 +50,5 @@ vows.describe("Parser Tests").addBatch({
             var tok = stream.advance();
             assert.equal(tok.id, "(end)");
         }
-        
     }
 }).export(module);
