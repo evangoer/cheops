@@ -4,50 +4,50 @@ var vows = require("vows"),
     
 vows.describe("Parser Tests").addBatch({
     "A symbol table": {
-        topic: parser.symbols,
+        topic: parser,
         
-        "responds to define() and getToken()": function(symbols) {
-            assert.isFunction(symbols.define);
-            assert.isFunction(symbols.get_token);
+        "responds to define() and getToken()": function(parser) {
+            assert.isFunction(parser.symbol);
+            assert.isFunction(parser.get_token);
         },
-        "can define a fake symbol": function(symbols) {
-            symbols.define({id:"(bogus)"});
-            assert.equal(symbols.table["**"].id, "**");
+        "can define a fake symbol": function(parser) {
+            var s_bogus = parser.symbol("(bogus)");
+            assert.equal(s_bogus.id, "(bogus)");
         },
-        "can get a bogus symbol once it is defined": function(symbols) {
-            var t_bogus = symbols.get_token({id: "(bogus)"});
-            assert.equal(symbols.table["(string)"].id, "(string)");
+        "can get a bogus symbol once it is defined": function(parser) {
+            var t_bogus = parser.get_token({id: "(bogus)"});
+            assert.equal(t_bogus.id, "(bogus)");
         },
-        "can get a bold token": function(symbols) {
-            var t_bold = symbols.get_token({id: "**"});
+        "can get a predefined bold token": function(parser) {
+            var t_bold = parser.get_token({id: "**"});
             assert.equal(t_bold.id, "**");
         },
-        "can create a string token": function(symbols) {
-            var t_string = symbols.get_token({id: "(string)", value: "HELLOSKI"});
+        "can create a string token with a value": function(parser) {
+            var t_string = parser.get_token({id: "(string)", value: "HELLOSKI"});
             assert.equal(t_string.id, "(string)");
             assert.equal(t_string.value, "HELLOSKI");
         }
     },
     "A token stream" : {
-        topic: parser.token_stream,
+        topic: parser,
         
-        "can set a stream of tokens": function(stream) {
-            assert.isFunction(stream.set);
-            stream.set([{id:"(string)", value:"This is "}, {id:"**"}, {id:"(string)", value:"bold"}, {id:"**"}, {id:"(string)", value:" text"}]);
+        "can set a stream of tokens": function(parser) {
+            assert.isFunction(parser.set_token_stream);
+            parser.set_token_stream([{id:"(string)", value:"This is "}, {id:"**"}, {id:"(string)", value:"bold"}, {id:"**"}, {id:"(string)", value:" text"}]);
         },
-        "where the first token is a string": function(stream) {
-            var tok = stream.advance();
+        "where the first token is a string": function(parser) {
+            var tok = parser.advance();
             assert.equal(tok.id, "(string)");
         },
-        "where the second token is a bold token": function(stream) {
-            var tok = stream.advance("(string)");
+        "where the second token is a bold token": function(parser) {
+            var tok = parser.advance("(string)");
             assert.equal(tok.id, "**");
         },
-        "where advancing to the end yields an (end) token": function(stream) {
-            stream.advance();
-            stream.advance();
-            stream.advance();
-            var tok = stream.advance();
+        "where advancing to the end yields an (end) token": function(parser) {
+            parser.advance();
+            parser.advance();
+            parser.advance();
+            var tok = parser.advance();
             assert.equal(tok.id, "(end)");
         }
     }
