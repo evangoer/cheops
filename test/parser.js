@@ -6,7 +6,7 @@ vows.describe("Parser Tests").addBatch({
     "A symbol table": {
         topic: parser,
         
-        "responds to define() and getToken()": function(parser) {
+        "responds to define() and get_token()": function(parser) {
             assert.isFunction(parser.symbol);
             assert.isFunction(parser.get_token);
         },
