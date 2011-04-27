@@ -31,38 +31,59 @@ vows.describe("Lexer Tests").addBatch({
     "The tabs_to_spaces function": {
         topic: lexer,
         
-        "Converts 0s to 0s": function (lexer) {
+        "converts 0s to 0s": function (lexer) {
             assert.equal(lexer.tabs_to_spaces(""), "");
         },
-        "Converts 7s to 7s": function(lexer) {
+        "converts 7s to 7s": function(lexer) {
             assert.equal(lexer.tabs_to_spaces("       "), "       ");
         },
-        "Converts 9s to 9s": function(lexer) {
+        "converts 9s to 9s": function(lexer) {
             assert.equal(lexer.tabs_to_spaces("         "), "         ");
         },
-        "Converts 1t to 8s": function(lexer) {
+        "converts 1t to 8s": function(lexer) {
             assert.equal(lexer.tabs_to_spaces("\t"), "        ");
         },
-        "Converts 2t to 16s": function(lexer) {
+        "converts 2t to 16s": function(lexer) {
             assert.equal(lexer.tabs_to_spaces("\t\t"), "                ");
         },
-        "Converts 1s1t to 8s": function(lexer) {
+        "converts 1s1t to 8s": function(lexer) {
             assert.equal(lexer.tabs_to_spaces(" \t"), "        ");
         },
-        "Converts 9s1t to 16s": function(lexer) {
+        "converts 9s1t to 16s": function(lexer) {
             assert.equal(lexer.tabs_to_spaces("         \t"), "                ");
         },
-        "Converts 7s1t to 8s": function(lexer) {
+        "converts 7s1t to 8s": function(lexer) {
             assert.equal(lexer.tabs_to_spaces("       \t"), "        ");
         },
-        "Converts 1t7s to 15s": function(lexer) {
+        "converts 1t7s to 15s": function(lexer) {
             assert.equal(lexer.tabs_to_spaces("\t       "), "               ");
         },
-        "Converts 1t9s1t to 24s": function(lexer) {
+        "converts 1t9s1t to 24s": function(lexer) {
             assert.equal(lexer.tabs_to_spaces("\t         \t"), "                        ")
         },
-        "Converts 1v1s1f1t to 8s": function(lexer) {
+        "converts 1v1s1f1t to 8s": function(lexer) {
             assert.equal(lexer.tabs_to_spaces("\v \f\t"), "        ");
         }
+    },
+    
+    "The indent_token function": {
+        topic: lexer,
+        
+        "converts 4 leading spaces to a length 4 indent token": function(lexer) {
+            var token = lexer.indent_token("    X ");
+            assert.equal(token.id, "(indent)");
+            assert.equal(token.value, 4);
+        },
+        "converts 0 leading spaces to a length 0 indent token": function(lexer) {
+            var token = lexer.indent_token("X   X ");
+            assert.equal(token.id, "(indent)");
+            assert.equal(token.value, 0);
+        },
+        "converts a leading '\\f \\t\\v' to a length 9 indent token": function(lexer) {
+            var token = lexer.indent_token("\f \t\vX ");
+            assert.equal(token.id, "(indent)");
+            assert.equal(token.value, 9);
+        }
     }
+    
 }).export(module);
