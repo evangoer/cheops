@@ -1,6 +1,12 @@
 var vows = require("vows"),
     assert = require("assert"),
     lexer = require("../lib/lexer.js");
+
+var ind = {id: "(indent)", value: 0},
+    str = {id: "(string)", value: "x"},
+    bol = {id: "**", value: "**"},
+    ita = {id: "*", value: "*"};
+    ws8 = "        ";
     
 vows.describe("Lexer Tests").addBatch({
     "The inline_token function": {
@@ -8,15 +14,11 @@ vows.describe("Lexer Tests").addBatch({
         
         "creates a token when supplied with a match": function(lexer) {
             var matches = /(a)|(b)/.exec("cacbc");
-            var token = lexer.inline_token(matches);
-            assert.equal(token.id, "a");
-            assert.equal(token.value, "a");
+            assert.deepEqual(lexer.inline_token(matches), {id: "a", value: "a"});
         },
         "creates the right token if the nth group is captured": function(lexer) {
             var matches = /(a)|(b)/.exec("cccbc");
-            var token = lexer.inline_token(matches);
-            assert.equal(token.id, "b");
-            assert.equal(token.value, "b");
+            assert.deepEqual(lexer.inline_token(matches), {id: "b", value: "b"});
         },
         "does not create a token when the input is null": function(lexer) {
             var matches = /(a)|(b)/.exec("c");
@@ -38,31 +40,31 @@ vows.describe("Lexer Tests").addBatch({
             assert.equal(lexer.tabs_to_spaces("       "), "       ");
         },
         "converts 9s to 9s": function(lexer) {
-            assert.equal(lexer.tabs_to_spaces("         "), "         ");
+            assert.equal(lexer.tabs_to_spaces("         "), ws8 + " ");
         },
         "converts 1t to 8s": function(lexer) {
-            assert.equal(lexer.tabs_to_spaces("\t"), "        ");
+            assert.equal(lexer.tabs_to_spaces("\t"), ws8);
         },
         "converts 2t to 16s": function(lexer) {
-            assert.equal(lexer.tabs_to_spaces("\t\t"), "                ");
+            assert.equal(lexer.tabs_to_spaces("\t\t"), ws8 + ws8);
         },
         "converts 1s1t to 8s": function(lexer) {
-            assert.equal(lexer.tabs_to_spaces(" \t"), "        ");
+            assert.equal(lexer.tabs_to_spaces(" \t"), ws8);
         },
         "converts 9s1t to 16s": function(lexer) {
-            assert.equal(lexer.tabs_to_spaces("         \t"), "                ");
+            assert.equal(lexer.tabs_to_spaces("         \t"), ws8 + ws8);
         },
         "converts 7s1t to 8s": function(lexer) {
-            assert.equal(lexer.tabs_to_spaces("       \t"), "        ");
+            assert.equal(lexer.tabs_to_spaces("       \t"), ws8);
         },
         "converts 1t7s to 15s": function(lexer) {
-            assert.equal(lexer.tabs_to_spaces("\t       "), "               ");
+            assert.equal(lexer.tabs_to_spaces("\t       "), ws8 + "       ");
         },
         "converts 1t9s1t to 24s": function(lexer) {
-            assert.equal(lexer.tabs_to_spaces("\t         \t"), "                        ")
+            assert.equal(lexer.tabs_to_spaces("\t         \t"), ws8 + ws8 + ws8);
         },
         "converts 1v1s1f1t to 8s": function(lexer) {
-            assert.equal(lexer.tabs_to_spaces("\v \f\t"), "        ");
+            assert.equal(lexer.tabs_to_spaces("\v \f\t"), ws8);
         }
     },
     
@@ -70,19 +72,13 @@ vows.describe("Lexer Tests").addBatch({
         topic: lexer,
         
         "converts 4 leading spaces to a length 4 indent token": function(lexer) {
-            var token = lexer.indent_token("    X ");
-            assert.equal(token.id, "(indent)");
-            assert.equal(token.value, 4);
+            assert.deepEqual(lexer.indent_token("    X "), {id: "(indent)", value: 4});
         },
         "converts 0 leading spaces to a length 0 indent token": function(lexer) {
-            var token = lexer.indent_token("X   X ");
-            assert.equal(token.id, "(indent)");
-            assert.equal(token.value, 0);
+            assert.deepEqual(lexer.indent_token("X   X "), ind);
         },
         "converts a leading '\\f \\t\\v' to a length 9 indent token": function(lexer) {
-            var token = lexer.indent_token("\f \t\vX ");
-            assert.equal(token.id, "(indent)");
-            assert.equal(token.value, 9);
+            assert.deepEqual(lexer.indent_token("\f \t\vX "), {id: "(indent)", value: 9});
         }
     }, 
     
@@ -117,75 +113,23 @@ vows.describe("Lexer Tests").addBatch({
     "The lex function": {
         topic: lexer,
         
-        "returns an empty array for falsy input": function(lexer) {
+        "returns [] for non-string input": function(lexer) {
             assert.deepEqual(lexer.lex(null), []);
         },
-        "returns an indent token for an empty string": function(lexer) {
-            var tokens = lexer.lex("");
-            assert.deepEqual(tokens[0], {id: "(indent)", value: 0});
+        "returns [[IND]] for an empty string": function(lexer) {
+            assert.deepEqual(lexer.lex(""), [[ind]]);
         },
-        "returns two indent tokens for two empty lines": function(lexer) {
-            var tokens = lexer.lex("\r\n"),
-                ind = {id: "(indent)", value: 0},
-                expected = [ind, ind];
-            assert.deepEqual(tokens, expected);
+        "returns [[IND],[IND]] for two empty lines": function(lexer) {
+            assert.deepEqual(lexer.lex("\r\n"), [[ind], [ind]]);
         },
-        "returns IND,STR,BOL,STR for bold text": function(lexer) {
-            var tokens = lexer.lex("**a**"),
-                ind = {id: "(indent)", value: 0},
-                str = {id: "(string)", value: "a"},
-                bol = {id: "**", value: "**"},
-                expected = [ind, bol, str, bol];   
-            assert.deepEqual(tokens, expected);
+        "returns [[IND,BOL,STR,BOL]] for bold text": function(lexer) {
+            assert.deepEqual(lexer.lex("**x**"), [[ind, bol, str, bol]]);
         },
-        "returns IND,STR,ITA,STR for italic text": function(lexer) {
-            var tokens = lexer.lex("*a*"),
-                ind = {id: "(indent)", value: 0},
-                str = {id: "(string)", value: "a"},
-                bol = {id: "*", value: "*"},
-                expected = [ind, bol, str, bol];   
-            assert.deepEqual(tokens, expected);
+        "returns [[IND,ITA,STR,ITA]] for italic text": function(lexer) {
+            assert.deepEqual(lexer.lex("*x*"), [[ind, ita, str, ita]]);
+        },
+        "returns [[IND,STR]] for a plain string line": function(lexer) {
+            assert.deepEqual(lexer.lex("x"), [[ind, str]]);
         }
-    }
-    
-    /*
-    1. input.split (2 lines or 1)
-    2. input is falsy
-    3. at least one bold match
-    4. at least one italic match
-    5. string match only
-    
-    var pattern = /(\*\*|\*(?!\*))/g
-
-    function lex(input) {
-        var lines = input ? input.split(/\r?\n/) : {length:0},
-            tokens = [],
-            matches,
-            last_index,
-            str_token;
-
-        for (var i = 0; i < lines.length; i += 1) {
-            last_index = 0;
-            tokens.push(indent_token(lines[i]));
-
-            while ((matches = pattern.exec(lines[i])) !== null) {
-                str_token = string_token(lines[i], last_index, matches);
-                if (str_token) {
-                    tokens.push(str_token);
-                }
-                // Save the index to start the next match for the next iteration,
-                // as the start point for slicing out the next string token.
-                last_index = pattern.lastIndex;
-
-                tokens.push(inline_token(matches));
-            }
-            // after we are out of matches, get the last 
-            tokens.push(string_token(lines[i], last_index));
-        }
-        return tokens;
-    }
-    */
-    
-    
-    
+    }    
 }).export(module);
