@@ -137,35 +137,112 @@ vows.describe("Lexer Tests").addBatch({
         }
     },
     
-    // SPECIFICATION:
-    // - must be preceded by whitespace, begin text block (equiv to preceded by indent token), or:
-    //    ' " ( [ { < - / :
-    //    U+2018, U+201C, U+2019, U+00AB, U+00A1, U+00BF
-    //    U+2010, U+2011, U+2012, U+2013, U+2014, U+00A0 (precede or follow either start or finish)
-    // - must be followed by non whitespace or 
-    //    U+2010, U+2011, U+2012, U+2013, U+2014, U+00A0 (precede or follow either start or finish)
-    // - start token preceded by '"([{<, cannot be immediately followed by corresponding '")]}<.
-    "The is_inline_start_token function": {
-        topic: lexer,
+    "An inline start token": {
+        topic: function() { return lexer.is_inline_start },
         
-        "BOGUS test": function(lexer) {
-            assert.equal(true, true);
+        "must be preceded by": {
+            // NOTE: at this point all whitespace is gone or converted to spaces
+            "whitespace": function(start) {
+                assert.equal(start(" ", "x"), true);
+                assert.equal(start("x", "x"), false);
+            },
+            "or one of the ASCII chars ' \" ( [ { < - / :": function(start) {
+                assert.equal(start("'", "x"), true);
+                assert.equal(start("\"", "x"), true);
+                assert.equal(start("(", "x"), true);
+                assert.equal(start("[", "x"), true);
+                assert.equal(start("{", "x"), true);
+                assert.equal(start("<", "x"), true);
+                assert.equal(start("-", "x"), true);
+                assert.equal(start("/", "x"), true);
+                assert.equal(start(":", "x"), true);
+            },
+            "or one of the Unicode chars \u2018 \u201c \u2019 \u00AB \u00A1 \u00BF": function(start) {
+                assert.equal(start("\u2018", "x"), true);
+                assert.equal(start("\u201c", "x"), true);
+                assert.equal(start("\u2019", "x"), true);
+                assert.equal(start("\u00AB", "x"), true);
+                assert.equal(start("\u00A1", "x"), true);
+                assert.equal(start("\u00BF", "x"), true);
+            },
+            "or one of six crazy Unicode space chars (u2010-u2014,u00A0)": function(start) {
+                assert.equal(start("\u2010", "x"), true);
+                assert.equal(start("\u2011", "x"), true);
+                assert.equal(start("\u2012", "x"), true);
+                assert.equal(start("\u2013", "x"), true);
+                assert.equal(start("\u2014", "x"), true);
+                assert.equal(start("\u00A0", "x"), true);
+            }
+        },
+        "must be followed by": {
+            "non-whitespace": function(start) {
+                assert.equal(start(" ", "x"), true);
+                assert.equal(start("x", " "), false);
+            },
+            "or one of six crazy Unicode space chars (u2010-u2014,u00A0)": function(start) {
+                assert.equal(start(" ", "\u2010"), true);
+                assert.equal(start(" ", "\u2011"), true);
+                assert.equal(start(" ", "\u2012"), true);
+                assert.equal(start(" ", "\u2013"), true);
+                assert.equal(start(" ", "\u2014"), true);
+                assert.equal(start(" ", "\u00A0"), true);
+            }
         }
         
     },
     
-    // SPECIFICATION:
-    // - must be preceded by non-whitespace or:
-    //    U+2010, U+2011, U+2012, U+2013, U+2014, U+00A0 (precede or follow either start or finish)
-    // - must be followed by whitespace, end text block (equiv to undefined), or:
-    //    ' " ) ] } > - / : . , ; ! ? \
-    //    U+2019, U+201D, U+00BB
-    //    U+2010, U+2011, U+2012, U+2013, U+2014, U+00A0 (precede or follow either start or finish)
-    "The is_inline_end_token_function": {
-        topic: lexer,
+    "An inline end token": {
+        topic: function() { return lexer.is_inline_end },
         
-        "BOGUS test": function(lexer) {
-            assert.equal(true, true);
+        "must be preceded by": {
+            "non-whitespace": function(end) {
+                assert.equal(end("x", " "), true);
+                assert.equal(end(" ", "x"), false);
+            },
+            "or one of six crazy Unicode space chars (u2010-u2014,u00A0)": function(end) {
+                assert.equal(end("\u2010", " "), true);
+                assert.equal(end("\u2011", " "), true);
+                assert.equal(end("\u2012", " "), true);
+                assert.equal(end("\u2013", " "), true);
+                assert.equal(end("\u2014", " "), true);
+                assert.equal(end("\u00A0", " "), true);
+            }
+        }, 
+        "must be followed by": {
+            "whitespace": function(end) {
+                assert.equal(end("x", " "), true);
+                assert.equal(end("x", "x"), false);
+            },
+            "or one of the ASCII chars ' \" ) ] } > - / : . , ; ! ? \\": function(end) {
+                assert.equal(end("x", "'"), true);
+                assert.equal(end("x", "\""), true);
+                assert.equal(end("x", ")"), true);
+                assert.equal(end("x", "]"), true);
+                assert.equal(end("x", "}"), true);
+                assert.equal(end("x", ">"), true);
+                assert.equal(end("x", "-"), true);
+                assert.equal(end("x", "/"), true);
+                assert.equal(end("x", ":"), true);
+                assert.equal(end("x", "."), true);
+                assert.equal(end("x", ","), true);
+                assert.equal(end("x", ";"), true);
+                assert.equal(end("x", "!"), true);
+                assert.equal(end("x", "?"), true);
+                assert.equal(end("x", "\\"), true);
+            },
+            "or one of the Unicode chars \u2019 \u201D \u00BB": function(end) {
+                assert.equal(end("x", "\u2019"), true);
+                assert.equal(end("x", "\u201D"), true);
+                assert.equal(end("x", "\u00BB"), true);
+            },
+            "or one of six crazy Unicode space chars (u2010-u2014,u00A0)": function(end) {
+                assert.equal(end("x", "\u2010"), true);
+                assert.equal(end("x", "\u2011"), true);
+                assert.equal(end("x", "\u2012"), true);
+                assert.equal(end("x", "\u2013"), true);
+                assert.equal(end("x", "\u2014"), true);
+                assert.equal(end("x", "\u00A0"), true);
+            }
         }
     }
 
