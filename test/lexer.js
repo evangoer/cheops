@@ -135,5 +135,38 @@ vows.describe("Lexer Tests").addBatch({
         "returns [[IND,STR]] for a plain string line": function(lexer) {
             assert.deepEqual(lexer.lex("x"), [[ind, str]]);
         }
-    }    
+    },
+    
+    // SPECIFICATION:
+    // - must be preceded by whitespace, begin text block (equiv to preceded by indent token), or:
+    //    ' " ( [ { < - / :
+    //    U+2018, U+201C, U+2019, U+00AB, U+00A1, U+00BF
+    //    U+2010, U+2011, U+2012, U+2013, U+2014, U+00A0 (precede or follow either start or finish)
+    // - must be followed by non whitespace or 
+    //    U+2010, U+2011, U+2012, U+2013, U+2014, U+00A0 (precede or follow either start or finish)
+    // - start token preceded by '"([{<, cannot be immediately followed by corresponding '")]}<.
+    "The is_inline_start_token function": {
+        topic: lexer,
+        
+        "BOGUS test": function(lexer) {
+            assert.equal(true, true);
+        }
+        
+    },
+    
+    // SPECIFICATION:
+    // - must be preceded by non-whitespace or:
+    //    U+2010, U+2011, U+2012, U+2013, U+2014, U+00A0 (precede or follow either start or finish)
+    // - must be followed by whitespace, end text block (equiv to undefined), or:
+    //    ' " ) ] } > - / : . , ; ! ? \
+    //    U+2019, U+201D, U+00BB
+    //    U+2010, U+2011, U+2012, U+2013, U+2014, U+00A0 (precede or follow either start or finish)
+    "The is_inline_end_token_function": {
+        topic: lexer,
+        
+        "BOGUS test": function(lexer) {
+            assert.equal(true, true);
+        }
+    }
+
 }).export(module);
