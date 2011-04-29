@@ -4,14 +4,15 @@ var vows = require("vows"),
 
 var ind = {id: "(indent)", value: 0},
     str = {id: "(string)", value: "x"},
+    str2 = {id: "(string)", value: "a"},
     bol = {id: "**", value: "**"},
     ita = {id: "*", value: "*"};
     ws8 = "        ";
     
 vows.describe("Lexer Tests").addBatch({
+    /*
     "The inline_token function": {
         topic: lexer,
-        
         "creates a token when supplied with a match": function(lexer) {
             var matches = /(a)|(b)/.exec("cacbc");
             assert.deepEqual(lexer.inline_token(matches), {id: "a", value: "a"});
@@ -28,7 +29,7 @@ vows.describe("Lexer Tests").addBatch({
             var matches = [undefined, undefined];
             assert.equal(lexer.inline_token(matches), undefined);
         }
-    },
+    },*/
 
     "The tabs_to_spaces function": {
         topic: lexer,
@@ -86,17 +87,17 @@ vows.describe("Lexer Tests").addBatch({
         topic: lexer,
         
         "converts a string token at a line's start": function(lexer) {
-            var token = lexer.string_token("0123456789", 0, {index:7});
+            var token = lexer.string_token("0123456789", 0, 7);
             assert.equal(token.id, "(string)");
             assert.equal(token.value, "0123456");
         },
         "trims leading whitespace when at a line's start": function(lexer) {
-            var token = lexer.string_token("  23456789", 0, {index:7});
+            var token = lexer.string_token("  23456789", 0, 7);
             assert.equal(token.id, "(string)");
             assert.equal(token.value, "23456");
         },
         "converts a string token from a line's middle": function(lexer) {
-            var token = lexer.string_token("  23456789", 4, {index:7});
+            var token = lexer.string_token("  23456789", 4, 7);
             assert.equal(token.id, "(string)");
             assert.equal(token.value, "456");
         },
@@ -124,6 +125,9 @@ vows.describe("Lexer Tests").addBatch({
         },
         "returns [[IND,BOL,STR,BOL]] for bold text": function(lexer) {
             assert.deepEqual(lexer.lex("**x**"), [[ind, bol, str, bol]]);
+        },
+        "returns [[IND,STR2,BOL,STR,BOL,STR2]] for bold text surrounded by strings": function(lexer) {
+            assert.deepEqual(lexer.lex("a**x**a"), [[ind, str2, bol, str, bol, str2]]);
         },
         "returns [[IND,ITA,STR,ITA]] for italic text": function(lexer) {
             assert.deepEqual(lexer.lex("*x*"), [[ind, ita, str, ita]]);
