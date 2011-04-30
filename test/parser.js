@@ -68,21 +68,21 @@ vows.describe("Parser Tests").addBatch({
             assert.equal(tree.value, "paragraph");
         },
         "which has three children": function(tree) {
-            assert.length(tree.first, 3);
+            assert.length(tree.children, 3);
         },
         "where the first child is text": function(tree) {
-            assert.equal(tree.first[0].id, "(string)");
-            assert.equal(tree.first[0].value, "This is ");
+            assert.equal(tree.children[0].id, "(string)");
+            assert.equal(tree.children[0].value, "This is ");
         },
         "where the second child is bold": function(tree) {
-            assert.equal(tree.first[1].id, "**");
-            assert.equal(tree.first[1].value, "**");
-            assert.equal(tree.first[1].first.id, "(string)");
-            assert.equal(tree.first[1].first.value, "bold");
+            assert.equal(tree.children[1].id, "**");
+            assert.equal(tree.children[1].value, "**");
+            assert.equal(tree.children[1].children[0].id, "(string)");
+            assert.equal(tree.children[1].children[0].value, "bold");
         },
         "where the third child is text": function(tree) {
-            assert.equal(tree.first[2].id, "(string)");
-            assert.equal(tree.first[2].value, " text.");
+            assert.equal(tree.children[2].id, "(string)");
+            assert.equal(tree.children[2].value, " text.");
         },
     }
 }).export(module);
