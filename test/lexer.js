@@ -2,21 +2,28 @@ var vows = require("vows"),
     assert = require("assert"),
     lexer = require("../lib/lexer.js");
 
-var ind = {id: "(indent)", value: 0},
-    str = {id: "(string)", value: "x"},
-    str2 = {id: "(string)", value: "a"},
-    str_bol = {id: "(string)", value: "**"},
-    bol = {id: "**", value: "**"},
-    ita = {id: "*", value: "*"},
-    interp = {id: "`", value: "`"},
-    lit = {id: "``", value: "``"},
-    sub = {id: "|", value: "|"},
-    tgt = {id: "_`", value: "_`"},
-    foot1 = {id: "[", value: "["},
-    foot2 = {id: "]_", value: "]_"},
-    link = {id: "`_", value: "`_"},
-    role = {id: "(role)", value: "a"},
-    ws8 = "        ",
+var tok = function(value, id) {
+    var token = {};
+    token.id = id || value;
+    token.value = value;
+    return token;
+}
+var s = function(value) {
+    return tok(value, "(string)");
+}
+
+var ind =     tok(0, "(indent)"),
+    str =     s("x");
+    bol =     tok("**"),
+    ita =     tok("*"),
+    interp =  tok("`"),
+    lit =     tok("``"),
+    sub =     tok("|"),
+    tgt =     tok("_`"),
+    foot1 =   tok("["),
+    foot2 =   tok("]_"),
+    link =    tok("`_"),
+    ws8 =     "        ",
     pattern = "\\*\\*|\\*(?!\\*)|_`|`_|``|:[\\w\\.\\-]*:`|`:[\\w\\.\\-]*:|`(?!`)|\\||\\[|\\]_"; // fake, use the real one later
     
 vows.describe("Lexer Tests").addBatch({
@@ -33,12 +40,12 @@ vows.describe("Lexer Tests").addBatch({
             var re = new RegExp(pattern, "g");
             var test_str = "**a**a";
             assert.deepEqual(inline_token(re.exec(test_str)), bol);
-            assert.deepEqual(inline_token(re.exec(test_str)), str_bol);
+            assert.deepEqual(inline_token(re.exec(test_str)), s("**"));
         },
         "returns STR_BOL,BOL from 'a**a**'": function(inline_token) {
             var re = new RegExp(pattern, "g");
             var test_str = "a**a**";
-            assert.deepEqual(inline_token(re.exec(test_str)), str_bol);
+            assert.deepEqual(inline_token(re.exec(test_str)), s("**"));
             assert.deepEqual(inline_token(re.exec(test_str)), bol);
         },
         "returns ITA,ITA from '*a*'": function(inline_token) {
@@ -86,42 +93,42 @@ vows.describe("Lexer Tests").addBatch({
         "returns [ROLE,INTERP],INTERP from ':a:`b`'": function(inline_token) {
             var re = new RegExp(pattern, "g");
             var test_str = ":a:`b`";
-            assert.deepEqual(inline_token(re.exec(test_str)), [role,interp]);
+            assert.deepEqual(inline_token(re.exec(test_str)), [tok("a", "(role)"), interp]);
             assert.deepEqual(inline_token(re.exec(test_str)), interp);
         },
         "returns INTERP,[INTERP,ROLE] from '`b`:a:'": function(inline_token) {
             var re = new RegExp(pattern, "g");
             var test_str = "`b`:a:";
             assert.deepEqual(inline_token(re.exec(test_str)), interp);
-            assert.deepEqual(inline_token(re.exec(test_str)), [interp,role]);
+            assert.deepEqual(inline_token(re.exec(test_str)), [interp, tok("a", "(role)")]);
         },
     },
     "Role names" : {
         topic: lexer,
         
         "may not contain special characters beyond . _ -": function(lexer) {
-            assert.deepEqual(lexer.lex(":$:`x`"), [[ind, {id:"(string)", value: ":$:"}, interp, str, interp]]);
-            assert.deepEqual(lexer.lex(":a%:`x`"), [[ind, {id:"(string)", value: ":a%:"}, interp, str, interp]]);
-            assert.deepEqual(lexer.lex(":^a:`x`"), [[ind, {id:"(string)", value: ":^a:"}, interp, str, interp]]);
-            assert.deepEqual(lexer.lex(":a&a:`x`"), [[ind, {id:"(string)", value: ":a&a:"}, interp, str, interp]]);
+            assert.deepEqual(lexer.lex(":$:`x`"),   [[ind, s(":$:"), interp, str, interp]]);
+            assert.deepEqual(lexer.lex(":a%:`x`"),  [[ind, s(":a%:"), interp, str, interp]]);
+            assert.deepEqual(lexer.lex(":^a:`x`"),  [[ind, s(":^a:"), interp, str, interp]]);
+            assert.deepEqual(lexer.lex(":a&a:`x`"), [[ind, s(":a&a:"), interp, str, interp]]);
         },
         "may not begin with ASCII chars . _ -": function(lexer) {
             var re = new RegExp(pattern);
-            assert.deepEqual(lexer.inline_token(re.exec(":.a:`b`")), [{id:"(string)", value: ":.a:"}, interp]);
-            assert.deepEqual(lexer.inline_token(re.exec(":_a:`b`")), [{id:"(string)", value: ":_a:"}, interp]);
-            assert.deepEqual(lexer.inline_token(re.exec(":-a:`b`")), [{id:"(string)", value: ":-a:"}, interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":.a:`b`")), [s(":.a:"), interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":_a:`b`")), [s(":_a:"), interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":-a:`b`")), [s(":-a:"), interp]);
         },
         "may not end with ASCII chars . _ -": function(lexer) {
             var re = new RegExp(pattern);
-            assert.deepEqual(lexer.inline_token(re.exec(":a.:`b`")), [{id:"(string)", value: ":a.:"}, interp]);
-            assert.deepEqual(lexer.inline_token(re.exec(":a_:`b`")), [{id:"(string)", value: ":a_:"}, interp]);
-            assert.deepEqual(lexer.inline_token(re.exec(":a-:`b`")), [{id:"(string)", value: ":a-:"}, interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":a.:`b`")), [s(":a.:"), interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":a_:`b`")), [s(":a_:"), interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":a-:`b`")), [s(":a-:"), interp]);
         },
         "may contain multiple interior ASCII chars . _ - in a row": function(lexer) {
             var re = new RegExp(pattern);
-            assert.deepEqual(lexer.inline_token(re.exec(":a.a..a:`b`")), [{id:"(role)", value: "a.a..a"}, interp]);
-            assert.deepEqual(lexer.inline_token(re.exec(":a--a.a:`b`")), [{id:"(role)", value: "a--a.a"}, interp]);
-            assert.deepEqual(lexer.inline_token(re.exec(":a.__-a:`b`")), [{id:"(role)", value: "a.__-a"}, interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":a.a..a:`b`")), [tok("a.a..a", "(role)"), interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":a--a.a:`b`")), [tok("a--a.a", "(role)"), interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":a.__-a:`b`")), [tok("a.__-a", "(role)"), interp]);
         }
     },
     "The tabs_to_spaces function": {
@@ -177,30 +184,22 @@ vows.describe("Lexer Tests").addBatch({
     }, 
     
     "The string_token function": {
-        topic: lexer,
+        topic: function() { return lexer.string_token },
         
-        "converts a string token at a line's start": function(lexer) {
-            var token = lexer.string_token("0123456789", 0, 7);
-            assert.equal(token.id, "(string)");
-            assert.equal(token.value, "0123456");
+        "converts a string token at a line's start": function(string_token) {
+            assert.deepEqual(string_token("0123456789", 0, 7), s("0123456"));
         },
-        "trims leading whitespace when at a line's start": function(lexer) {
-            var token = lexer.string_token("  23456789", 0, 7);
-            assert.equal(token.id, "(string)");
-            assert.equal(token.value, "23456");
+        "trims leading whitespace when at a line's start": function(string_token) {
+            assert.deepEqual(string_token("  23456789", 0, 7), s("23456"));
         },
-        "converts a string token from a line's middle": function(lexer) {
-            var token = lexer.string_token("  23456789", 4, 7);
-            assert.equal(token.id, "(string)");
-            assert.equal(token.value, "456");
+        "converts a string token from a line's middle": function(string_token) {
+            assert.deepEqual(string_token("  23456789", 4, 7), s("456"));
         },
-        "converts a string token from a line's end": function(lexer) {
-            var token = lexer.string_token("  23456789", 4);
-            assert.equal(token.id, "(string)");
-            assert.equal(token.value, "456789");
+        "converts a string token from a line's end": function(string_token) {
+            assert.deepEqual(string_token("  23456789", 4), s("456789"));
         },
-        "returns null rather than an empty string token": function(lexer) {
-            assert.equal(lexer.string_token("", 0, null));
+        "returns null rather than an empty string token": function(string_token) {
+            assert.equal(string_token("", 0), null);
         }
     },
     
@@ -219,8 +218,8 @@ vows.describe("Lexer Tests").addBatch({
         "returns [[IND,BOL,STR,BOL]] for bold text": function(lexer) {
             assert.deepEqual(lexer.lex("**x**"), [[ind, bol, str, bol]]);
         },
-        "returns [[IND,STR2,STR_BOL,STR,STR_BOL,STR2]] for 'bold' wrapped in non-whitepace": function(lexer) {
-            assert.deepEqual(lexer.lex("a**x**a"), [[ind, str2, str_bol, str, str_bol, str2]]);
+        "returns [[IND,STR,STR_BOL,STR,STR_BOL,STR]] for 'bold' wrapped in non-whitepace": function(lexer) {
+            assert.deepEqual(lexer.lex("a**x**a"), [[ind, s("a"), s("**"), str, s("**"), s("a")]]);
         },
         "returns [[IND,ITA,STR,ITA]] for italic text": function(lexer) {
             assert.deepEqual(lexer.lex("*x*"), [[ind, ita, str, ita]]);
