@@ -17,7 +17,7 @@ var ind = {id: "(indent)", value: 0},
     link = {id: "`_", value: "`_"},
     role = {id: "(role)", value: "a"},
     ws8 = "        ",
-    pattern = "\\*\\*|\\*(?!\\*)|_`|`_|``|:\\w*:`|`:\\w*:|`(?!`)|\\||\\[|\\]_"; // fake, use the real one later
+    pattern = "\\*\\*|\\*(?!\\*)|_`|`_|``|:[\\w\\.\\-]*:`|`:[\\w\\.\\-]*:|`(?!`)|\\||\\[|\\]_"; // fake, use the real one later
     
 vows.describe("Lexer Tests").addBatch({
     "The inline_token function": {
@@ -96,7 +96,34 @@ vows.describe("Lexer Tests").addBatch({
             assert.deepEqual(inline_token(re.exec(test_str)), [interp,role]);
         },
     },
-
+    "Role names" : {
+        topic: lexer,
+        
+        "may not contain special characters beyond . _ -": function(lexer) {
+            assert.deepEqual(lexer.lex(":$:`x`"), [[ind, {id:"(string)", value: ":$:"}, interp, str, interp]]);
+            assert.deepEqual(lexer.lex(":a%:`x`"), [[ind, {id:"(string)", value: ":a%:"}, interp, str, interp]]);
+            assert.deepEqual(lexer.lex(":^a:`x`"), [[ind, {id:"(string)", value: ":^a:"}, interp, str, interp]]);
+            assert.deepEqual(lexer.lex(":a&a:`x`"), [[ind, {id:"(string)", value: ":a&a:"}, interp, str, interp]]);
+        },
+        "may not begin with ASCII chars . _ -": function(lexer) {
+            var re = new RegExp(pattern);
+            assert.deepEqual(lexer.inline_token(re.exec(":.a:`b`")), [{id:"(string)", value: ":.a:"}, interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":_a:`b`")), [{id:"(string)", value: ":_a:"}, interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":-a:`b`")), [{id:"(string)", value: ":-a:"}, interp]);
+        },
+        "may not end with ASCII chars . _ -": function(lexer) {
+            var re = new RegExp(pattern);
+            assert.deepEqual(lexer.inline_token(re.exec(":a.:`b`")), [{id:"(string)", value: ":a.:"}, interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":a_:`b`")), [{id:"(string)", value: ":a_:"}, interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":a-:`b`")), [{id:"(string)", value: ":a-:"}, interp]);
+        },
+        "may contain multiple interior ASCII chars . _ - in a row": function(lexer) {
+            var re = new RegExp(pattern);
+            assert.deepEqual(lexer.inline_token(re.exec(":a.a..a:`b`")), [{id:"(role)", value: "a.a..a"}, interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":a--a.a:`b`")), [{id:"(role)", value: "a--a.a"}, interp]);
+            assert.deepEqual(lexer.inline_token(re.exec(":a.__-a:`b`")), [{id:"(role)", value: "a.__-a"}, interp]);
+        }
+    },
     "The tabs_to_spaces function": {
         topic: lexer,
         
