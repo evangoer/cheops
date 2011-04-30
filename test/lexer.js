@@ -226,6 +226,12 @@ vows.describe("Lexer Tests").addBatch({
         },
         "returns [[IND,STR]] for a plain string line": function(lexer) {
             assert.deepEqual(lexer.lex("x"), [[ind, str]]);
+        },
+        "returns [[IND, ROLE, INTERP, STR, INTERP]] for a role": function(lexer) {
+            assert.deepEqual(lexer.lex(":a:`b`"), [[ind, tok("a", "(role)"), interp, s("b"), interp]]);
+        },
+        "returns [[IND, STR, INTERP, STR, INTERP]] for a malformed role": function(lexer) {
+            assert.deepEqual(lexer.lex(":$:`b`"), [[ind, s(":$:"), interp, s("b"), interp]]);
         }
     },
     
