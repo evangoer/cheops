@@ -5,31 +5,97 @@ var vows = require("vows"),
 var ind = {id: "(indent)", value: 0},
     str = {id: "(string)", value: "x"},
     str2 = {id: "(string)", value: "a"},
+    str_bol = {id: "(string)", value: "**"},
     bol = {id: "**", value: "**"},
-    ita = {id: "*", value: "*"};
-    ws8 = "        ";
+    ita = {id: "*", value: "*"},
+    interp = {id: "`", value: "`"},
+    lit = {id: "``", value: "``"},
+    sub = {id: "|", value: "|"},
+    tgt = {id: "_`", value: "_`"},
+    foot1 = {id: "[", value: "["},
+    foot2 = {id: "]_", value: "]_"},
+    link = {id: "`_", value: "`_"},
+    role = {id: "(role)", value: "a"},
+    ws8 = "        ",
+    pattern = "\\*\\*|\\*(?!\\*)|_`|`_|``|:\\w*:`|`:\\w*:|`(?!`)|\\||\\[|\\]_"; // fake, use the real one later
     
 vows.describe("Lexer Tests").addBatch({
-    /*
     "The inline_token function": {
-        topic: lexer,
-        "creates a token when supplied with a match": function(lexer) {
-            var matches = /(a)|(b)/.exec("cacbc");
-            assert.deepEqual(lexer.inline_token(matches), {id: "a", value: "a"});
+        topic: function() { return lexer.inline_token },
+        
+        "returns BOL,BOL from '**a**'": function(inline_token) {
+            var re = new RegExp(pattern, "g");
+            var test_str = "**a**";
+            assert.deepEqual(inline_token(re.exec(test_str)), bol);
+            assert.deepEqual(inline_token(re.exec(test_str)), bol);
         },
-        "creates the right token if the nth group is captured": function(lexer) {
-            var matches = /(a)|(b)/.exec("cccbc");
-            assert.deepEqual(lexer.inline_token(matches), {id: "b", value: "b"});
+        "returns BOL,STR_BOL from '**a**a'": function(inline_token) {
+            var re = new RegExp(pattern, "g");
+            var test_str = "**a**a";
+            assert.deepEqual(inline_token(re.exec(test_str)), bol);
+            assert.deepEqual(inline_token(re.exec(test_str)), str_bol);
         },
-        "does not create a token when the input is null": function(lexer) {
-            var matches = /(a)|(b)/.exec("c");
-            assert.equal(lexer.inline_token(matches), undefined);
+        "returns STR_BOL,BOL from 'a**a**'": function(inline_token) {
+            var re = new RegExp(pattern, "g");
+            var test_str = "a**a**";
+            assert.deepEqual(inline_token(re.exec(test_str)), str_bol);
+            assert.deepEqual(inline_token(re.exec(test_str)), bol);
         },
-        "does not create a token if all match elements are bogus": function(lexer) {
-            var matches = [undefined, undefined];
-            assert.equal(lexer.inline_token(matches), undefined);
-        }
-    },*/
+        "returns ITA,ITA from '*a*'": function(inline_token) {
+            var re = new RegExp(pattern, "g");
+            var test_str = "*a*";
+            assert.deepEqual(inline_token(re.exec(test_str)), ita);
+            assert.deepEqual(inline_token(re.exec(test_str)), ita);
+        },
+        "returns LIT,LIT from '``a``'": function(inline_token) {
+            var re = new RegExp(pattern, "g");
+            var test_str = "``a``";
+            assert.deepEqual(inline_token(re.exec(test_str)), lit);
+            assert.deepEqual(inline_token(re.exec(test_str)), lit);
+        },
+        "returns INTERP,INTERP from '`a`'": function(inline_token) {
+            var re = new RegExp(pattern, "g");
+            var test_str = "`a`";
+            assert.deepEqual(inline_token(re.exec(test_str)), interp);
+            assert.deepEqual(inline_token(re.exec(test_str)), interp);
+        },
+        "returns SUB,SUB from '|a|'": function(inline_token) {
+            var re = new RegExp(pattern, "g");
+            var test_str = "|a|";
+            assert.deepEqual(inline_token(re.exec(test_str)), sub);
+            assert.deepEqual(inline_token(re.exec(test_str)), sub);
+        },
+        "returns TGT,INTERP from '_`a`'": function(inline_token) {
+            var re = new RegExp(pattern, "g");
+            var test_str = "_`a`";
+            assert.deepEqual(inline_token(re.exec(test_str)), tgt);
+            assert.deepEqual(inline_token(re.exec(test_str)), interp);
+        },
+        "returns FOOT1,FOOT2 from '[a]_'": function(inline_token) {
+            var re = new RegExp(pattern, "g");
+            var test_str = "[a]_";
+            assert.deepEqual(inline_token(re.exec(test_str)), foot1);
+            assert.deepEqual(inline_token(re.exec(test_str)), foot2);
+        },
+        "returns INTERP,LINK from '`a`_'": function(inline_token) {
+            var re = new RegExp(pattern, "g");
+            var test_str = "`a`_";
+            assert.deepEqual(inline_token(re.exec(test_str)), interp);
+            assert.deepEqual(inline_token(re.exec(test_str)), link);
+        },
+        "returns [ROLE,INTERP],INTERP from ':a:`b`'": function(inline_token) {
+            var re = new RegExp(pattern, "g");
+            var test_str = ":a:`b`";
+            assert.deepEqual(inline_token(re.exec(test_str)), [role,interp]);
+            assert.deepEqual(inline_token(re.exec(test_str)), interp);
+        },
+        "returns INTERP,[INTERP,ROLE] from '`b`:a:'": function(inline_token) {
+            var re = new RegExp(pattern, "g");
+            var test_str = "`b`:a:";
+            assert.deepEqual(inline_token(re.exec(test_str)), interp);
+            assert.deepEqual(inline_token(re.exec(test_str)), [interp,role]);
+        },
+    },
 
     "The tabs_to_spaces function": {
         topic: lexer,
@@ -126,8 +192,8 @@ vows.describe("Lexer Tests").addBatch({
         "returns [[IND,BOL,STR,BOL]] for bold text": function(lexer) {
             assert.deepEqual(lexer.lex("**x**"), [[ind, bol, str, bol]]);
         },
-        "returns [[IND,STR2,BOL,STR,BOL,STR2]] for bold text surrounded by strings": function(lexer) {
-            assert.deepEqual(lexer.lex("a**x**a"), [[ind, str2, bol, str, bol, str2]]);
+        "returns [[IND,STR2,STR_BOL,STR,STR_BOL,STR2]] for 'bold' wrapped in non-whitepace": function(lexer) {
+            assert.deepEqual(lexer.lex("a**x**a"), [[ind, str2, str_bol, str, str_bol, str2]]);
         },
         "returns [[IND,ITA,STR,ITA]] for italic text": function(lexer) {
             assert.deepEqual(lexer.lex("*x*"), [[ind, ita, str, ita]]);
@@ -142,8 +208,9 @@ vows.describe("Lexer Tests").addBatch({
         
         "must be preceded by": {
             // NOTE: at this point all whitespace is gone or converted to spaces
-            "whitespace": function(start) {
+            "whitespace or a line begin": function(start) {
                 assert.equal(start(" ", "x"), true);
+                assert.equal(start("", "x"), true);
                 assert.equal(start("x", "x"), false);
             },
             "or one of the ASCII chars ' \" ( [ { < - / :": function(start) {
@@ -165,7 +232,7 @@ vows.describe("Lexer Tests").addBatch({
                 assert.equal(start("\u00A1", "x"), true);
                 assert.equal(start("\u00BF", "x"), true);
             },
-            "or one of six crazy Unicode space chars (u2010-u2014,u00A0)": function(start) {
+            "or one of six Unicode hyphens & space chars (u2010-u2014,u00A0)": function(start) {
                 assert.equal(start("\u2010", "x"), true);
                 assert.equal(start("\u2011", "x"), true);
                 assert.equal(start("\u2012", "x"), true);
@@ -177,9 +244,9 @@ vows.describe("Lexer Tests").addBatch({
         "must be followed by": {
             "non-whitespace": function(start) {
                 assert.equal(start(" ", "x"), true);
-                assert.equal(start("x", " "), false);
+                assert.equal(start(" ", " "), false);
             },
-            "or one of six crazy Unicode space chars (u2010-u2014,u00A0)": function(start) {
+            "or one of six Unicode hyphens & space chars (u2010-u2014,u00A0)": function(start) {
                 assert.equal(start(" ", "\u2010"), true);
                 assert.equal(start(" ", "\u2011"), true);
                 assert.equal(start(" ", "\u2012"), true);
@@ -187,8 +254,27 @@ vows.describe("Lexer Tests").addBatch({
                 assert.equal(start(" ", "\u2014"), true);
                 assert.equal(start(" ", "\u00A0"), true);
             }
+        },
+        "cannot be wrapped in": {
+            "matching ' chars": function(start) {
+                assert.equal(start("'", "'"), false);                
+            },
+            "matching \" chars": function(start) {
+                assert.equal(start("\"", "\""), false);                
+            },
+            "( and ) chars": function(start) {
+                assert.equal(start("(", ")"), false);                
+            },
+            "[ and ] chars": function(start) {
+                assert.equal(start("[", "]"), false);                
+            },
+            "{ and } chars": function(start) {
+                assert.equal(start("{", "}"), false);                
+            },
+            "< and > chars": function(start) {
+                assert.equal(start("{", "}"), false);                
+            }
         }
-        
     },
     
     "An inline end token": {
@@ -197,9 +283,9 @@ vows.describe("Lexer Tests").addBatch({
         "must be preceded by": {
             "non-whitespace": function(end) {
                 assert.equal(end("x", " "), true);
-                assert.equal(end(" ", "x"), false);
+                assert.equal(end(" ", " "), false);
             },
-            "or one of six crazy Unicode space chars (u2010-u2014,u00A0)": function(end) {
+            "or one of six Unicode hyphens & space chars (u2010-u2014,u00A0)": function(end) {
                 assert.equal(end("\u2010", " "), true);
                 assert.equal(end("\u2011", " "), true);
                 assert.equal(end("\u2012", " "), true);
@@ -209,8 +295,9 @@ vows.describe("Lexer Tests").addBatch({
             }
         }, 
         "must be followed by": {
-            "whitespace": function(end) {
+            "whitespace or a line end": function(end) {
                 assert.equal(end("x", " "), true);
+                assert.equal(end("x", ""), true);
                 assert.equal(end("x", "x"), false);
             },
             "or one of the ASCII chars ' \" ) ] } > - / : . , ; ! ? \\": function(end) {
@@ -235,7 +322,7 @@ vows.describe("Lexer Tests").addBatch({
                 assert.equal(end("x", "\u201D"), true);
                 assert.equal(end("x", "\u00BB"), true);
             },
-            "or one of six crazy Unicode space chars (u2010-u2014,u00A0)": function(end) {
+            "or one of six Unicode hyphens & space chars (u2010-u2014,u00A0)": function(end) {
                 assert.equal(end("x", "\u2010"), true);
                 assert.equal(end("x", "\u2011"), true);
                 assert.equal(end("x", "\u2012"), true);
