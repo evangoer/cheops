@@ -5,6 +5,9 @@ var vows = require("vows"),
 var ts_inline = [{id:"(string)", value:"This is "}, {id:"**"}, 
         {id:"(string)", value:"bold"}, {id:"**"}, {id:"(string)", value:" text."}];
 
+var ts_simple_line1 = [{id: "(indent)", value: 0}, {id:"(string)", value:"Foo and bar"}];
+var ts_simple_line2 = [{id: "(indent)", value: 0}, {id:"(string)", value:"Baz and zot"}];
+
 var ts_paragraph = [{id:"paragraph"}].concat(ts_inline).concat([{id:"\n\n"}]);
     
 vows.describe("Parser Tests").addBatch({
@@ -37,8 +40,8 @@ vows.describe("Parser Tests").addBatch({
         topic: parser,
         
         "can set a stream of tokens": function(parser) {
-            assert.isFunction(parser.set_token_stream);
-            parser.set_token_stream(ts_inline);
+            assert.isFunction(parser.token_stream.set);
+            parser.token_stream.set([ts_inline]);
         },
         "where the first token is a string": function(parser) {
             var tok = parser.advance();
@@ -55,11 +58,29 @@ vows.describe("Parser Tests").addBatch({
             var tok = parser.advance();
             assert.equal(tok.id, "(end)");
         }
+    },
+    "Another token stream": {
+        topic: function() {
+            return parser.token_stream;
+        },
+        "can set a stream of tokens": function(token_stream) {
+            token_stream.set([ts_simple_line1, ts_simple_line2]);
+            assert.equal(token_stream.line, 0);
+            assert.equal(token_stream.tokens.length, 2);
+        },
+        "has a first line containing an indent and string token": function(token_stream) {
+            assert.deepEqual(token_stream.next(), {id: "(indent)", value: 0});
+            assert.deepEqual(token_stream.next(), {id: "(string)", value: "Foo and bar"});
+        },
+        "has a second line containing an indent and another string token": function(token_stream) {
+            assert.deepEqual(token_stream.next(), {id: "(indent)", value: 0});
+            assert.deepEqual(token_stream.next(), {id: "(string)", value: "Baz and zot"});
+        },
     }
 }).addBatch({
     "A paragraph document tree": {
         topic: function() {
-            parser.set_token_stream(ts_paragraph);
+            parser.token_stream.set([ts_paragraph]);
             parser.advance();
             return parser.parse();
         },
