@@ -16,7 +16,7 @@ var ind = function(value) {
 };
 
 var ts_inline = [[s("This is "), tok("**"), s("bold"), tok("**"), s(" text.")]];
-var ts_simple = [[ind(0), s("Foo and bar")],[ind(0), s("Baz and zot")]];
+var ts_simple = [[ind(0), s("Foo and bar")],[ind(2)],[ind(0), s("Baz and zot")]];
 
 // BOGUS, redo (or move to integration tests?)
 // var ts_paragraph = [{id:"paragraph"}].concat(ts_inline).concat([{id:"\n\n"}]);
@@ -74,18 +74,21 @@ vows.describe("Parser Tests").addBatch({
         topic: function() {
             return parser.token_stream;
         },
-        "can set a stream of tokens": function(token_stream) {
+        "can set a stream of tokens with three lines": function(token_stream) {
             token_stream.set(ts_simple);
             assert.equal(token_stream.line, 0);
-            assert.equal(token_stream.tokens.length, 2);
+            assert.equal(token_stream.tokens.length, 3);
         },
         "has a first line containing an indent and string token": function(token_stream) {
-            assert.deepEqual(token_stream.next(), {id: "(indent)", value: 0});
-            assert.deepEqual(token_stream.next(), {id: "(string)", value: "Foo and bar"});
+            assert.deepEqual(token_stream.next(), ind(0));
+            assert.deepEqual(token_stream.next(), s("Foo and bar"));
         },
-        "has a second line containing an indent and another string token": function(token_stream) {
-            assert.deepEqual(token_stream.next(), {id: "(indent)", value: 0});
-            assert.deepEqual(token_stream.next(), {id: "(string)", value: "Baz and zot"});
+        "has a second line that contains only a single indent token": function(token_stream) {
+            assert.deepEqual(token_stream.next(), ind(2));
+        },
+        "has a third line containing an indent and another string token": function(token_stream) {
+            assert.deepEqual(token_stream.next(), ind(0));
+            assert.deepEqual(token_stream.next(), s("Baz and zot"));
         }
     }
 }).addBatch({
