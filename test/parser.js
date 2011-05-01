@@ -83,12 +83,26 @@ vows.describe("Parser Tests").addBatch({
             assert.deepEqual(token_stream.next(), ind(0));
             assert.deepEqual(token_stream.next(), s("Foo and bar"));
         },
+        "determines that the next line is empty": function(token_stream) {
+            assert.equal(token_stream.is_next_line_empty(), true);
+        },
         "has a second line that contains only a single indent token": function(token_stream) {
             assert.deepEqual(token_stream.next(), ind(2));
+        },
+        "determines that the next line is not empty": function(token_stream) {
+            assert.equal(token_stream.is_next_line_empty(), false);
         },
         "has a third line containing an indent and another string token": function(token_stream) {
             assert.deepEqual(token_stream.next(), ind(0));
             assert.deepEqual(token_stream.next(), s("Baz and zot"));
+        },
+        "determines that EOF lines are empty": function(token_stream) {
+            assert.equal(token_stream.is_next_line_empty(), true);
+        },
+        "and continues to return (end) tokens": function(token_stream) {
+            assert.deepEqual((token_stream.next()).id, "(end)");
+            assert.equal(token_stream.is_next_line_empty(), true);
+            assert.deepEqual((token_stream.next()).id, "(end)");
         }
     }
 }).addBatch({
