@@ -1,15 +1,26 @@
 var vows = require("vows"),
     assert = require("assert"),
     parser = require("../lib/parser.js");
-    
-var ts_inline = [{id:"(string)", value:"This is "}, {id:"**"}, 
-        {id:"(string)", value:"bold"}, {id:"**"}, {id:"(string)", value:" text."}];
 
-var ts_simple_line1 = [{id: "(indent)", value: 0}, {id:"(string)", value:"Foo and bar"}];
-var ts_simple_line2 = [{id: "(indent)", value: 0}, {id:"(string)", value:"Baz and zot"}];
+var tok = function(value, id) {
+    var token = {};
+    token.id = id || value;
+    token.value = value;
+    return token;
+};
+var s = function(value) {
+    return tok(value, "(string)");
+};
+var ind = function(value) {
+    return tok(value, "(indent)");
+};
 
-var ts_paragraph = [{id:"paragraph"}].concat(ts_inline).concat([{id:"\n\n"}]);
-    
+var ts_inline = [[s("This is "), tok("**"), s("bold"), tok("**"), s(" text.")]];
+var ts_simple = [[ind(0), s("Foo and bar")],[ind(0), s("Baz and zot")]];
+
+// BOGUS, redo (or move to integration tests?)
+// var ts_paragraph = [{id:"paragraph"}].concat(ts_inline).concat([{id:"\n\n"}]);
+
 vows.describe("Parser Tests").addBatch({
     "A symbol table": {
         topic: parser,
@@ -23,15 +34,15 @@ vows.describe("Parser Tests").addBatch({
             assert.equal(s_bogus.id, "(bogus)");
         },
         "can get a bogus symbol once it is defined": function(parser) {
-            var t_bogus = parser.get_token({id: "(bogus)"});
+            var t_bogus = parser.get_token(tok("(bogus)"));
             assert.equal(t_bogus.id, "(bogus)");
         },
         "can get a predefined bold token": function(parser) {
-            var t_bold = parser.get_token({id: "**"});
+            var t_bold = parser.get_token(tok("**"));
             assert.equal(t_bold.id, "**");
         },
         "can create a string token with a value": function(parser) {
-            var t_string = parser.get_token({id: "(string)", value: "HELLOSKI"});
+            var t_string = parser.get_token(s("HELLOSKI"));
             assert.equal(t_string.id, "(string)");
             assert.equal(t_string.value, "HELLOSKI");
         }
@@ -41,7 +52,7 @@ vows.describe("Parser Tests").addBatch({
         
         "can set a stream of tokens": function(parser) {
             assert.isFunction(parser.token_stream.set);
-            parser.token_stream.set([ts_inline]);
+            parser.token_stream.set(ts_inline);
         },
         "where the first token is a string": function(parser) {
             var tok = parser.advance();
@@ -64,7 +75,7 @@ vows.describe("Parser Tests").addBatch({
             return parser.token_stream;
         },
         "can set a stream of tokens": function(token_stream) {
-            token_stream.set([ts_simple_line1, ts_simple_line2]);
+            token_stream.set(ts_simple);
             assert.equal(token_stream.line, 0);
             assert.equal(token_stream.tokens.length, 2);
         },
@@ -75,9 +86,10 @@ vows.describe("Parser Tests").addBatch({
         "has a second line containing an indent and another string token": function(token_stream) {
             assert.deepEqual(token_stream.next(), {id: "(indent)", value: 0});
             assert.deepEqual(token_stream.next(), {id: "(string)", value: "Baz and zot"});
-        },
+        }
     }
 }).addBatch({
+    /*
     "A paragraph document tree": {
         topic: function() {
             parser.token_stream.set([ts_paragraph]);
@@ -105,5 +117,5 @@ vows.describe("Parser Tests").addBatch({
             assert.equal(tree.children[2].id, "(string)");
             assert.equal(tree.children[2].value, " text.");
         },
-    }
+    }*/
 }).export(module);

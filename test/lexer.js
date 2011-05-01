@@ -7,10 +7,10 @@ var tok = function(value, id) {
     token.id = id || value;
     token.value = value;
     return token;
-}
+};
 var s = function(value) {
     return tok(value, "(string)");
-}
+};
 
 var ind =     tok(0, "(indent)"),
     str =     s("x");
