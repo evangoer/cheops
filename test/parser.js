@@ -18,9 +18,6 @@ var ind = function(value) {
 var ts_inline = [[s("This is "), tok("**"), s("bold"), tok("**"), s(" text.")]];
 var ts_simple = [[ind(0), s("Foo and bar")],[ind(2)],[ind(0), s("Baz and zot")]];
 
-// BOGUS, redo (or move to integration tests?)
-// var ts_paragraph = [{id:"paragraph"}].concat(ts_inline).concat([{id:"\n\n"}]);
-
 vows.describe("Parser Tests").addBatch({
     "A symbol table": {
         topic: parser,
@@ -79,32 +76,31 @@ vows.describe("Parser Tests").addBatch({
             assert.equal(token_stream.line, 0);
             assert.equal(token_stream.tokens.length, 3);
         },
+        "peeking ahead finds an indent token": function(token_stream) {
+            assert.deepEqual(token_stream.peek(), ind(0));
+        },
         "has a first line containing an indent and string token": function(token_stream) {
             assert.deepEqual(token_stream.next(), ind(0));
             assert.deepEqual(token_stream.next(), s("Foo and bar"));
         },
-        "determines that the next line is empty": function(token_stream) {
-            assert.equal(token_stream.is_next_line_empty(), true);
+        "peeking ahead finds another indent token": function(token_stream) {
+            assert.deepEqual(token_stream.peek(), ind(2));
         },
         "has a second line that contains only a single indent token": function(token_stream) {
             assert.deepEqual(token_stream.next(), ind(2));
-        },
-        "determines that the next line is not empty": function(token_stream) {
-            assert.equal(token_stream.is_next_line_empty(), false);
         },
         "has a third line containing an indent and another string token": function(token_stream) {
             assert.deepEqual(token_stream.next(), ind(0));
             assert.deepEqual(token_stream.next(), s("Baz and zot"));
         },
-        "determines that EOF lines are empty": function(token_stream) {
-            assert.equal(token_stream.is_next_line_empty(), true);
+        "peeking ahead finds an (end) token": function(token_stream) {
+            assert.equal((token_stream.peek()).id, "(end)");
         },
-        "and continues to return (end) tokens": function(token_stream) {
-            assert.deepEqual((token_stream.next()).id, "(end)");
-            assert.equal(token_stream.is_next_line_empty(), true);
-            assert.deepEqual((token_stream.next()).id, "(end)");
+        "after that, continues to return (end) tokens": function(token_stream) {
+            assert.equal((token_stream.next()).id, "(end)");
+            assert.equal((token_stream.next()).id, "(end)");
         }
-    }
+    },
 }).addBatch({
     /*
     "A paragraph document tree": {
