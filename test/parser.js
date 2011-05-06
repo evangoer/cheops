@@ -101,6 +101,27 @@ vows.describe("Parser Tests").addBatch({
             assert.equal((token_stream.next()).id, "(end)");
         }
     },
+    "The transition() function": {
+        topic: parser,
+        
+        "For a non-indent token, returns the same token back": function(parser) {
+            var t;
+            parser.token_stream.set([[s("a"), s("b")]]);
+            t = parser.advance();
+            parser.advance();
+            t = parser.transition(t);
+            assert.equal(t.id, "(string)");
+            assert.equal(t.value, "a");
+        },
+        "For an indent token followed by a string, returns a paragraph": function(parser) {
+            var t;
+            parser.token_stream.set([[ind(0), s("b")]]);
+            t = parser.advance();
+            parser.advance();
+            t = parser.transition(t);
+            assert.equal(t.id, "paragraph");
+        }
+    }
 }).addBatch({
     /*
     "A paragraph document tree": {
