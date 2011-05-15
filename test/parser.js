@@ -101,6 +101,7 @@ vows.describe("Parser Tests").addBatch({
             assert.equal((token_stream.next()).id, "(end)");
         }
     },
+    // possibly bogus -- I think we need this.transition(), not a general one
     "The transition() function": {
         topic: parser,
         
@@ -120,6 +121,35 @@ vows.describe("Parser Tests").addBatch({
             parser.advance();
             t = parser.transition(t);
             assert.equal(t.id, "paragraph");
+        }
+    },
+    "A body element": {
+        topic: parser,
+        
+        "For an empty stream, body element has no children": function(parser) {
+            var p = parser.get_token({id: "paragraph"});
+            parser.token_stream.set([[tok("(end)")]]);
+            assert.deepEqual(p.nud().children, []);
+        },
+        "For a stream of IND,STR, body element has a single string child": function(parser) {
+            var p = parser.get_token({id: "paragraph"});
+            parser.token_stream.set([[ind(0), s("Foo bar")]]);
+            var children = p.nud().children;
+            assert.equal(children.length, 1);
+            assert.equal(children[0].id, "(string)");
+            assert.equal(children[0].value, "Foo bar");
+        },
+        // This actually should work, but state is getting corrupted by the previous parse attempt.
+        "For a stream of IND,STR,IND,STR, body element has two string children": function(parser) {
+            var p = parser.get_token({id: "paragraph"});
+            parser.token_stream.set([[ind(0), s("Foo bar")], [ind(0), s("Baz zorp")]]);
+            var children = p.nud().children;
+            console.log(children);
+            assert.equal(children.length, 2);
+            assert.equal(children[0].id, "(string)");
+            assert.equal(children[0].value, "Foo bar");
+            assert.equal(children[1].id, "(string)");
+            assert.equal(children[1].value, "Baz zorp");
         }
     }
 }).addBatch({
