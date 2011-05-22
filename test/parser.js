@@ -37,7 +37,7 @@ vows.describe("Parser Tests").addBatch({
             var t_bogus = parser.get_token(tok("(bogus)"));
             assert.equal(t_bogus.id, "(bogus)");
             assert.equal(t_bogus.template, "<span/>");
-            assert.isFunction(t_bogus.parse);
+            assert.equal(t_bogus.parse, undefined);
             assert.equal(t_bogus.transition, undefined);
         },
         "can get a predefined bold token": function(parser) {
