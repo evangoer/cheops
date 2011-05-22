@@ -132,10 +132,9 @@ vows.describe("Parser Tests").addBatch({
     "The make_node() function": {
         topic: parser,
         
-        "When given a string token, returns a plain string": function(parser) {
+        "When given a string token, returns a very lightweight object": function(parser) {
             var node = parser.make_node(parser.get_token(s("aaa")));
-            assert.isString(node);
-            assert.equal(node, "aaa");
+            assert.equal(node.parse(), "aaa");
         },
         "When given a paragraph token, returns an empty Y.Node p": function(parser) {
             var node = parser.make_node(parser.get_token(tok("paragraph")));
@@ -150,42 +149,33 @@ vows.describe("Parser Tests").addBatch({
             assert.equal(node.getData("indent"), 4);
         },
     },
-    "A paragraph": {
+    "A paragraph can parse token streams": {
         topic: parser, 
         
         "For an empty stream, a paragraph has no children": function(parser) {
-            var p = parser.get_token({id: "paragraph"});
-            var node = parser.make_node(p);
+            var node = parser.make_node(parser.get_token({id: "paragraph"}));
+            parser.token_stream.set([[tok("(end)")]]);
+            node.parse();
+            assert.equal(node.get("children").size(), 0);
+            assert.equal(node.getContent(), "");
+        },
+        "For a stream of IND,STR, a paragraph contains a single string": function(parser) {
+            var node = parser.make_node(parser.get_token({id: "paragraph"}));
+            parser.token_stream.set([[ind(0), s("Foo bar")]]);
+            node.parse();
+            assert.equal(node.getContent(), "Foo bar");
+        },
+        "For a stream of IND,STR,IND,STR, a paragraph contains a single string": function(parser) {
+            var node = parser.make_node(parser.get_token({id: "paragraph"}));
+            parser.token_stream.set([[ind(0), s("Foo bar")], [ind(0), s("Baz zorp")]]);
+            node.parse();
+            assert.equal(node.getContent(), "Foo barBaz zorp");
+        },
+        "For a stream of IND,STR,IND,IND,STR, the paragraph contains just the first string": function(parser) {
+            var node = parser.make_node(parser.get_token({id: "paragraph"}));
+            parser.token_stream.set([[ind(0), s("Foo bar")], [ind(0)], [ind(0), s("Baz zorp")]]);
+            node.parse();
+            assert.equal(node.getContent(), "Foo bar");
         }
     }
-    /* // BROKEN until we figure out how paragraph nodes actually work
-    "A body element": {
-        topic: parser,
-        
-        "For an empty stream, body element has no children": function(parser) {
-            var p = parser.get_token({id: "paragraph"});
-            parser.token_stream.set([[tok("(end)")]]);
-            assert.deepEqual(p.parse().children, []);
-        },
-        "For a stream of IND,STR, body element has a single string child": function(parser) {
-            var p = parser.get_token({id: "paragraph"});
-            parser.token_stream.set([[ind(0), s("Foo bar")]]);
-            var children = p.parse().children;
-            assert.equal(children.length, 1);
-            assert.equal(children[0].id, "(string)");
-            assert.equal(children[0].value, "Foo bar");
-        },
-        // This actually should work, but state is getting corrupted by the previous parse attempt.
-        "For a stream of IND,STR,IND,STR, body element has two string children": function(parser) {
-            var p = parser.get_token({id: "paragraph"});
-            parser.token_stream.set([[ind(0), s("Foo bar")], [ind(0), s("Baz zorp")]]);
-            var children = p.parse().children;
-            console.log(children);
-            assert.equal(children.length, 2);
-            assert.equal(children[0].id, "(string)");
-            assert.equal(children[0].value, "Foo bar");
-            assert.equal(children[1].id, "(string)");
-            assert.equal(children[1].value, "Baz zorp");
-        }
-    }*/
 }).export(module);
