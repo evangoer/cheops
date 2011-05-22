@@ -5,18 +5,17 @@ var vows = require("vows"),
 
 var Y = YUI({debug: false}).useSync("node");
 
-var tok = function(value, id, element) {
+var tok = function(value, id) {
     var token = {};
     token.id = id || value;
     token.value = value;
-    token.element = element;
     return token;
 };
 var s = function(value) {
     return tok(value, "(string)");
 };
 var ind = function(value) {
-    return tok(value, '(indent)', '<span class="indent"/>');
+    return tok(value, "(indent)");
 };
 
 var ts_inline = [[s("This is "), tok("**"), s("bold"), tok("**"), s(" text.")]];
@@ -131,27 +130,33 @@ vows.describe("Parser Tests").addBatch({
         }
     },
     "The make_node() function": {
-        topic: function() {
-            return parser.make_node;
-        },
+        topic: parser,
         
-        "When given a string token, returns a plain string": function(make_node) {
-            var node = make_node(s("aaa"));
+        "When given a string token, returns a plain string": function(parser) {
+            var node = parser.make_node(parser.get_token(s("aaa")));
             assert.isString(node);
             assert.equal(node, "aaa");
         },
-        "When given a paragraph token, returns an empty Y.Node p": function(make_node) {
-            var node = make_node(tok("paragraph", "paragraph", "<p/>"));
+        "When given a paragraph token, returns an empty Y.Node p": function(parser) {
+            var node = parser.make_node(parser.get_token(tok("paragraph")));
             assert.equal(node.get("nodeName"), "P");
             assert.equal(node.getContent(), "");
         },
-        "When given an indent token, returns an empty Y.Node span": function(make_node) {
-            var node = make_node(ind(4));
+        "When given an indent token, returns an empty Y.Node span": function(parser) {
+            var node = parser.make_node(parser.get_token(ind(4)));
             assert.equal(node.get("nodeName"), "SPAN");
             assert.isTrue(node.hasClass("indent"));
             assert.equal(node.getContent(), "");
             assert.equal(node.getData("indent"), 4);
         },
+    },
+    "A paragraph": {
+        topic: parser, 
+        
+        "For an empty stream, a paragraph has no children": function(parser) {
+            var p = parser.get_token({id: "paragraph"});
+            var node = parser.make_node(p);
+        }
     }
     /* // BROKEN until we figure out how paragraph nodes actually work
     "A body element": {
