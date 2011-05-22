@@ -129,12 +129,12 @@ vows.describe("Parser Tests").addBatch({
         "For an empty stream, body element has no children": function(parser) {
             var p = parser.get_token({id: "paragraph"});
             parser.token_stream.set([[tok("(end)")]]);
-            assert.deepEqual(p.nud().children, []);
+            assert.deepEqual(p.parse().children, []);
         },
         "For a stream of IND,STR, body element has a single string child": function(parser) {
             var p = parser.get_token({id: "paragraph"});
             parser.token_stream.set([[ind(0), s("Foo bar")]]);
-            var children = p.nud().children;
+            var children = p.parse().children;
             assert.equal(children.length, 1);
             assert.equal(children[0].id, "(string)");
             assert.equal(children[0].value, "Foo bar");
@@ -143,7 +143,7 @@ vows.describe("Parser Tests").addBatch({
         "For a stream of IND,STR,IND,STR, body element has two string children": function(parser) {
             var p = parser.get_token({id: "paragraph"});
             parser.token_stream.set([[ind(0), s("Foo bar")], [ind(0), s("Baz zorp")]]);
-            var children = p.nud().children;
+            var children = p.parse().children;
             console.log(children);
             assert.equal(children.length, 2);
             assert.equal(children[0].id, "(string)");
