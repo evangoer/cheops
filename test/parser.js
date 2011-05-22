@@ -137,13 +137,18 @@ vows.describe("Parser Tests").addBatch({
             assert.isString(node);
             assert.equal(node, "aaa");
         },
+        "When given a paragraph token, returns an empty Y.Node p": function(make_node) {
+            var node = make_node(tok("paragraph", "paragraph", "<p/>"));
+            assert.equal(node.get("nodeName"), "P");
+            assert.equal(node.getContent(), "");
+        },
         "When given an indent token, returns an empty Y.Node span": function(make_node) {
             var node = make_node(ind(4));
             assert.equal(node.get("nodeName"), "SPAN");
             assert.isTrue(node.hasClass("indent"));
             assert.equal(node.getContent(), "");
             assert.equal(node.getData("indent"), 4);
-        }
+        },
     }
     /* // BROKEN until we figure out how paragraph nodes actually work
     "A body element": {
