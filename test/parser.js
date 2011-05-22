@@ -1,18 +1,22 @@
 var vows = require("vows"),
     assert = require("assert"),
+    YUI = require("yui3").YUI,
     parser = require("../lib/parser.js");
 
-var tok = function(value, id) {
+var Y = YUI({debug: false}).useSync("node");
+
+var tok = function(value, id, element) {
     var token = {};
     token.id = id || value;
     token.value = value;
+    token.element = element;
     return token;
 };
 var s = function(value) {
     return tok(value, "(string)");
 };
 var ind = function(value) {
-    return tok(value, "(indent)");
+    return tok(value, '(indent)', '<span class="indent"/>');
 };
 
 var ts_inline = [[s("This is "), tok("**"), s("bold"), tok("**"), s(" text.")]];
@@ -132,6 +136,13 @@ vows.describe("Parser Tests").addBatch({
             var node = make_node(s("aaa"));
             assert.isString(node);
             assert.equal(node, "aaa");
+        },
+        "When given an indent token, returns an empty Y.Node span": function(make_node) {
+            var node = make_node(ind(4));
+            assert.equal(node.get("nodeName"), "SPAN");
+            assert.isTrue(node.hasClass("indent"));
+            assert.equal(node.getContent(), "");
+            assert.equal(node.getData("indent"), 4);
         }
     }
     /* // BROKEN until we figure out how paragraph nodes actually work
