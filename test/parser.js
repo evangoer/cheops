@@ -34,9 +34,12 @@ vows.describe("Parser Tests").addBatch({
             var s_bogus = parser.symbol("(bogus)");
             assert.equal(s_bogus.id, "(bogus)");
         },
-        "can get a bogus symbol once it is defined": function(parser) {
+        "can get a bogus token once it is defined as a symbol": function(parser) {
             var t_bogus = parser.get_token(tok("(bogus)"));
             assert.equal(t_bogus.id, "(bogus)");
+            assert.equal(t_bogus.template, "<span/>");
+            assert.isFunction(t_bogus.parse);
+            assert.equal(t_bogus.transition, undefined);
         },
         "can get a predefined bold token": function(parser) {
             var t_bold = parser.get_token(tok("**"));
