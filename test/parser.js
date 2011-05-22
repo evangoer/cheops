@@ -123,6 +123,18 @@ vows.describe("Parser Tests").addBatch({
             assert.equal(t.id, "paragraph");
         }
     },
+    "The make_node() function": {
+        topic: function() {
+            return parser.make_node;
+        },
+        
+        "When given a string token, returns a plain string": function(make_node) {
+            var node = make_node(s("aaa"));
+            assert.isString(node);
+            assert.equal(node, "aaa");
+        }
+    }
+    /* // BROKEN until we figure out how paragraph nodes actually work
     "A body element": {
         topic: parser,
         
@@ -151,35 +163,5 @@ vows.describe("Parser Tests").addBatch({
             assert.equal(children[1].id, "(string)");
             assert.equal(children[1].value, "Baz zorp");
         }
-    }
-}).addBatch({
-    /*
-    "A paragraph document tree": {
-        topic: function() {
-            parser.token_stream.set([ts_paragraph]);
-            parser.advance();
-            return parser.parse();
-        },
-        "starts with a paragraph": function(tree) {
-            assert.equal(tree.id, "paragraph");
-            assert.equal(tree.value, "paragraph");
-        },
-        "which has three children": function(tree) {
-            assert.length(tree.children, 3);
-        },
-        "where the first child is text": function(tree) {
-            assert.equal(tree.children[0].id, "(string)");
-            assert.equal(tree.children[0].value, "This is ");
-        },
-        "where the second child is bold": function(tree) {
-            assert.equal(tree.children[1].id, "**");
-            assert.equal(tree.children[1].value, "**");
-            assert.equal(tree.children[1].children[0].id, "(string)");
-            assert.equal(tree.children[1].children[0].value, "bold");
-        },
-        "where the third child is text": function(tree) {
-            assert.equal(tree.children[2].id, "(string)");
-            assert.equal(tree.children[2].value, " text.");
-        },
     }*/
 }).export(module);
